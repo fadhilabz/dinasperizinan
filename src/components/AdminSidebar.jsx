@@ -5,8 +5,8 @@ import { usePathname } from "next/navigation";
 
 const MENU_ADMIN = [
   { href: "/admin/dashboard", label: "Dashboard" },
-  { href: "/admin/surat-masuk", label: "Surat Masuk" },
-  { href: "/admin/surat-keluar", label: "Surat Keluar" },
+  { href: "/admin/surat-masuk/daftar", label: "Surat Masuk" },
+  { href: "/admin/surat-keluar/daftar", label: "Surat Keluar" },
   { href: "/admin/petugas", label: "Kelola Petugas" },
   { href: "/admin/laporan", label: "Laporan" },
 ];
