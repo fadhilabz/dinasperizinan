@@ -62,9 +62,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         onLogout={handleLogout}
       />
 
-      <div className="flex min-h-screen flex-1 flex-col">
+      <div className="flex min-h-screen min-w-0 flex-1 flex-col">
         <AdminTopbar title={pageTitle} onOpenSidebar={() => setSidebarOpen(true)} />
-        <main className="flex-1 overflow-y-auto p-4 md:p-8">{children}</main>
+        <main className="min-w-0 flex-1 overflow-y-auto p-4 md:p-8">{children}</main>
       </div>
     </div>
   );

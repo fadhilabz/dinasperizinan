@@ -258,7 +258,7 @@ export default function Page() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[1100px]">
+              <table className="w-full min-w-full">
                 <thead>
                   <tr className="border-b bg-gray-50 text-left text-sm text-gray-600">
                     <th className="px-4 py-3">
