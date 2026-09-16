@@ -209,7 +209,7 @@ export default function Page() {
 
   return (
     <main className="min-h-screen bg-gray-100 p-6">
-      <div className="mx-auto max-w-7xl">
+      <div className="mx-auto max-w-full">
 
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <div>
