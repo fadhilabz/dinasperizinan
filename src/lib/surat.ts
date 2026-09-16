@@ -28,6 +28,9 @@ export interface FileFirestore {
   file_size: number;
 }
 
+/**
+ * Validasi file sebelum diproses.
+ */
 function validasiFile(file: File) {
   if (file.size > MAX_FILE_SIZE) {
     throw new Error(
@@ -45,6 +48,9 @@ function validasiFile(file: File) {
   }
 }
 
+/**
+ * Mengubah File menjadi Base64.
+ */
 function fileToBase64(
   file: File
 ): Promise<string> {
@@ -61,19 +67,16 @@ function fileToBase64(
         return;
       }
 
-      const base64 =
-        result.split(",")[1];
+      const parts = result.split(",");
 
-      if (!base64) {
+      if (parts.length < 2 || !parts[1]) {
         reject(
-          new Error(
-            "Format file tidak valid."
-          )
+          new Error("Format file tidak valid.")
         );
         return;
       }
 
-      resolve(base64);
+      resolve(parts[1]);
     };
 
     reader.onerror = () => {
@@ -86,6 +89,9 @@ function fileToBase64(
   });
 }
 
+/**
+ * Menyiapkan file sebelum disimpan ke Firestore.
+ */
 async function siapkanFile(
   file: File
 ): Promise<FileFirestore> {
@@ -104,6 +110,13 @@ async function siapkanFile(
   };
 }
 
+/**
+ * Menambahkan surat baru.
+ *
+ * File diproses terlebih dahulu.
+ * Jika file gagal dibaca atau validasi gagal,
+ * data surat tidak akan dibuat di Firestore.
+ */
 export async function tambahSurat(
   jenis: JenisSurat,
   data: Record<string, unknown>,
@@ -113,12 +126,6 @@ export async function tambahSurat(
     | FileFirestore
     | null = null;
 
-  /*
-   * File diproses terlebih dahulu.
-   *
-   * Kalau gagal membaca / validasi file,
-   * addDoc tidak akan dijalankan.
-   */
   if (file) {
     fileData = await siapkanFile(file);
   }
@@ -157,6 +164,15 @@ export async function tambahSurat(
   return hasil.id;
 }
 
+/**
+ * Mengubah data surat.
+ *
+ * Jika ada file baru:
+ * - file lama diganti dengan file baru.
+ *
+ * Jika tidak ada file baru:
+ * - file lama tetap dipertahankan.
+ */
 export async function updateSurat(
   jenis: JenisSurat,
   id: string,
@@ -167,10 +183,6 @@ export async function updateSurat(
     | FileFirestore
     | null = null;
 
-  /*
-   * Kalau user memilih file baru,
-   * proses file terlebih dahulu.
-   */
   if (file) {
     fileData = await siapkanFile(file);
   }
@@ -180,13 +192,6 @@ export async function updateSurat(
     {
       ...data,
 
-      /*
-       * Jika file baru ada,
-       * file lama diganti.
-       *
-       * Jika tidak ada,
-       * field file tidak disentuh.
-       */
       ...(fileData
         ? {
             file_data:
@@ -209,6 +214,12 @@ export async function updateSurat(
   );
 }
 
+/**
+ * Menghapus surat.
+ *
+ * Karena file disimpan di dokumen Firestore yang sama,
+ * menghapus dokumen otomatis menghapus metadata dan file.
+ */
 export async function hapusSurat(
   jenis: JenisSurat,
   id: string
@@ -218,6 +229,9 @@ export async function hapusSurat(
   );
 }
 
+/**
+ * Mengubah status surat.
+ */
 export async function ubahStatusSurat(
   jenis: JenisSurat,
   id: string,
@@ -234,6 +248,13 @@ export async function ubahStatusSurat(
   );
 }
 
+/**
+ * Mengubah Base64 menjadi URL Blob
+ * untuk membuka file di browser.
+ *
+ * Dibuat menggunakan ArrayBuffer agar kompatibel
+ * dengan TypeScript / Next.js versi terbaru.
+ */
 export function base64ToUrl(
   base64: string,
   mimeType: string
@@ -241,40 +262,41 @@ export function base64ToUrl(
   const byteCharacters =
     atob(base64);
 
-  const byteArrays: Uint8Array[] = [];
-
-  const sliceSize = 1024;
+  const byteNumbers =
+    new Array<number>(
+      byteCharacters.length
+    );
 
   for (
-    let offset = 0;
-    offset < byteCharacters.length;
-    offset += sliceSize
+    let i = 0;
+    i < byteCharacters.length;
+    i++
   ) {
-    const slice =
-      byteCharacters.slice(
-        offset,
-        offset + sliceSize
-      );
-
-    const byteNumbers =
-      new Array(slice.length);
-
-    for (
-      let i = 0;
-      i < slice.length;
-      i++
-    ) {
-      byteNumbers[i] =
-        slice.charCodeAt(i);
-    }
-
-    byteArrays.push(
-      new Uint8Array(byteNumbers)
-    );
+    byteNumbers[i] =
+      byteCharacters.charCodeAt(i);
   }
 
+  const byteArray =
+    new Uint8Array(byteNumbers);
+
+  /**
+   * Buat ArrayBuffer baru.
+   *
+   * Ini sengaja dilakukan agar tipe buffer
+   * menjadi ArrayBuffer yang kompatibel dengan
+   * BlobPart pada TypeScript terbaru.
+   */
+  const buffer =
+    new ArrayBuffer(
+      byteArray.byteLength
+    );
+
+  new Uint8Array(buffer).set(
+    byteArray
+  );
+
   const blob = new Blob(
-    byteArrays,
+    [buffer],
     {
       type:
         mimeType ||
